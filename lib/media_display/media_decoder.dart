@@ -10,17 +10,18 @@ class MediaDecoder {
     return base64Decode(base64String);
   }
 
-  static Future<File> decodeVideo(String id, String base64String) async {
+  static Future<File> decodeVideo(String fileName, String base64String) async {
     final Uint8List byteList = base64Decode(base64String);
     final Directory tempDir = await getTemporaryDirectory();
 
-    final File file = File(join(tempDir.path, '$id.mp4'));
+    final File file = File(join(tempDir.path, '$fileName.mp4'));
 
-    if (await file.exists()) {
-      return file;
-    } else {
+    //if file not exists yet (first time)
+    //write file to temp directory
+    if (!await file.exists()) {
       file.writeAsBytes(byteList);
-      return file;
     }
+
+    return file;
   }
 }
