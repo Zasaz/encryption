@@ -19,10 +19,16 @@ class _DisplayVideoState extends State<DisplayVideo> {
   late VideoPlayerController _playerController;
 
   Future<File> _decodeVideoToFile() async {
-    final File videoFile = await MediaDecoder.decodeVideo(
+    final mediaDecoder = MediaDecoder();
+
+    final File? videoFile = await mediaDecoder.decodeVideo(
       widget.dataModel.contentId,
       widget.dataModel.videoEncoding,
     );
+
+    if (videoFile == null) {
+      throw Exception('File not found');
+    }
 
     _playerController = VideoPlayerController.file(videoFile);
     await _playerController.initialize();
