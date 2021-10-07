@@ -19,7 +19,7 @@ class MediaDecoder {
     //if file not exists yet (first time)
     //write file to temp directory
     if (!await file.exists()) {
-      file.writeAsBytes(byteList);
+      await file.writeAsBytes(byteList);
     }
 
     return file;
