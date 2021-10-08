@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -11,39 +12,32 @@ class MediaDecoder {
     return base64Decode(base64String);
   }
 
-  Future<File?> decodeVideo(String fileName, String base64String) async {
-    if (Platform.isAndroid) {
-      return _decodeVideoToFile(fileName, base64String);
-    } else {
-      return _decodeVideoToCached(fileName, base64String);
-    }
-  }
-
-  Future<File> _decodeVideoToCached(
-      String fileName, String base64String) async {
+  Future<File> decodeVideo(String fileName, String base64String) async {
     final Uint8List byteList = base64Decode(base64String);
     final Directory tempDir = await getTemporaryDirectory();
-    final File file = File(join(tempDir.path, '$fileName.mp4'));
+    final File file = File(join(tempDir.path, fileName));
 
     if (!await file.exists()) {
       await file.writeAsBytes(byteList);
+      _saveVideoToFile(fileName, file);
     }
 
     return file;
   }
 
-  Future<File?> _decodeVideoToFile(String fileName, String base64String) async {
-    if (!await _requestPermission(Permission.storage)) return null;
-
-    final Directory dir = await _getExternalDir();
-    final Uint8List byteList = base64Decode(base64String);
-    final File file = File(join(dir.path, '$fileName.mp4'));
-
-    if (!await file.exists()) {
-      await file.writeAsBytes(byteList);
+  Future<void> _saveVideoToFile(String fileName, File videoFile) async {
+    if (Platform.isAndroid) {
+      if (await _requestPermission(Permission.storage)) {
+        final Directory dir = await _getExternalDir();
+        final String newPath = join(dir.path, fileName);
+        await videoFile.copy(newPath);
+      }
+    } else if (Platform.isIOS) {
+      if (await _requestPermission(Permission.photos)) {
+        await ImageGallerySaver.saveFile(videoFile.path,
+            isReturnPathOfIOS: true);
+      }
     }
-
-    return file;
   }
 
   Future<Directory> _getExternalDir() async {
